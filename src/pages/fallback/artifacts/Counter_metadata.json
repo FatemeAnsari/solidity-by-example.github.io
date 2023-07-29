@@ -20,8 +20,27 @@
 			},
 			{
 				"inputs": [],
-				"name": "increment",
-				"outputs": [],
+				"name": "get",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "inc",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			}
@@ -39,7 +58,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/contracts/Counter.sol": "Counter"
+			"src/pages/fallback/FallbackInputOutput.sol": "Counter"
 		},
 		"evmVersion": "shanghai",
 		"libraries": {},
@@ -53,12 +72,11 @@
 		"remappings": []
 	},
 	"sources": {
-		"src/contracts/Counter.sol": {
-			"keccak256": "0x0f94a2e1fb728a3a4f9e2c07631813c3d4b86f658c9a77adaac21c496de804da",
-			"license": "MIT",
+		"src/pages/fallback/FallbackInputOutput.sol": {
+			"keccak256": "0x94b55f0c6131e66537cb155df0cacc6f7138588663aa70b0c65747e9d755737e",
 			"urls": [
-				"bzz-raw://e4a22bb6dd76c76d26f2a6da193e1cdf4ac66da8335ac9b465d4964889576403",
-				"dweb:/ipfs/QmTA2PVfU7duuu5nyHuXXtiZovHeeziNUQjoMoUxttm8qV"
+				"bzz-raw://c93352cf8554ed2b7e7c15be58d6497b33d9b9323b76e60bbb4653f39f8c4c25",
+				"dweb:/ipfs/QmY2Cxp664xk92DLNgHwPeoYGDW5AQXYNmfpiZPEXT9cbZ"
 			]
 		}
 	},

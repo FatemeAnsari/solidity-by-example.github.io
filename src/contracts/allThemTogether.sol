@@ -756,3 +756,636 @@ contract D is X, Y {
 contract E is X, Y {
     constructor() Y("Y was called") X("X was called") {}
 }
+
+// Inheritance
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+/* Graph of inheritance
+    A
+   / \
+  B   C
+ / \ /
+F  D,E
+
+*/
+
+contract A {
+    function foo() public pure virtual returns (string memory) {
+        return "A";
+    }
+}
+
+// Contracts inherit other contracts by using the keyword 'is'.
+contract B is A {
+    // Override A.foo()
+    function foo() public pure virtual override returns (string memory) {
+        return "B";
+    }
+}
+
+contract C is A {
+    // Override A.foo()
+    function foo() public pure virtual override returns (string memory) {
+        return "C";
+    }
+}
+
+// Contracts can inherit from multiple parent contracts.
+// When a function is called that is defined multiple times in
+// different contracts, parent contracts are searched from
+// right to left, and in depth-first manner.
+
+contract D is B, C {
+    // D.foo() returns "C"
+    // since C is the right most parent contract with function foo()
+    function foo() public pure override(B, C) returns (string memory) {
+        return super.foo();
+    }
+}
+
+contract E is C, B {
+    // E.foo() returns "B"
+    // since B is the right most parent contract with function foo()
+    function foo() public pure override(C, B) returns (string memory) {
+        return super.foo();
+    }
+}
+
+// Inheritance must be ordered from “most base-like” to “most derived”.
+// Swapping the order of A and B will throw a compilation error.
+contract F is A, B {
+    function foo() public pure override(A, B) returns (string memory) {
+        return super.foo();
+    }
+}
+
+// Shadowing Inherited State Variables
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract A {
+    string public name = "Contract A";
+
+    function getName() public view returns (string memory) {
+        return name;
+    }
+}
+
+// Shadowing is disallowed in Solidity 0.6
+// This will not compile
+// contract B is A {
+//     string public name = "Contract B";
+// }
+
+contract C is A {
+    // This is the correct way to override inherited state variables.
+    constructor() {
+        name = "Contract C";
+    }
+
+    // C.getName returns "Contract C"
+}
+
+// calling Parent Contracts
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+/* Inheritance tree
+   A
+ /  \
+B   C
+ \ /
+  D
+*/
+
+contract A {
+    // This is called an event. You can emit events from your function
+    // and they are logged into the transaction log.
+    // In our case, this will be useful for tracing function calls.
+    event Log(string message);
+
+    function foo() public virtual {
+        emit Log("A.foo called");
+    }
+
+    function bar() public virtual {
+        emit Log("A.bar called");
+    }
+}
+
+contract B is A {
+    function foo() public virtual override {
+        emit Log("B.foo called");
+        A.foo();
+    }
+
+    function bar() public virtual override {
+        emit Log("B.bar called");
+        super.bar();
+    }
+}
+
+contract C is A {
+    function foo() public virtual override {
+        emit Log("C.foo called");
+        A.foo();
+    }
+
+    function bar() public virtual override {
+        emit Log("C.bar called");
+        super.bar();
+    }
+}
+
+contract D is B, C {
+    // Try:
+    // - Call D.foo and check the transaction logs.
+    //   Although D inherits A, B and C, it only called C and then A.
+    // - Call D.bar and check the transaction logs
+    //   D called C, then B, and finally A.
+    //   Although super was called twice (by B and C) it only called A once.
+
+    function foo() public override(B, C) {
+        super.foo();
+    }
+
+    function bar() public override(B, C) {
+        super.bar();
+    }
+}
+
+// Interface
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Counter {
+    uint public count;
+
+    function increment() external {
+        count += 1;
+    }
+}
+
+interface ICounter {
+    function count() external view returns (uint);
+
+    function increment() external;
+}
+
+contract MyContract {
+    function incrementCounter(address _counter) external {
+        ICounter(_counter).increment();
+    }
+
+    function getCount(address _counter) external view returns (uint) {
+        return ICounter(_counter).count();
+    }
+}
+
+// Uniswap example
+interface UniswapV2Factory {
+    function getPair(
+        address tokenA,
+        address tokenB
+    ) external view returns (address pair);
+}
+
+interface UniswapV2Pair {
+    function getReserves()
+        external
+        view
+        returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+}
+
+contract UniswapExample {
+    address private factory = 0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+    address private dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address private weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
+    function getTokenReserves() external view returns (uint, uint) {
+        address pair = UniswapV2Factory(factory).getPair(dai, weth);
+        (uint reserve0, uint reserve1, ) = UniswapV2Pair(pair).getReserves();
+        return (reserve0, reserve1);
+    }
+}
+
+
+// Payable
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Payable {
+    // Payable address can receive Ether
+    address payable public owner;
+
+    // Payable constructor can receive Ether
+    constructor() payable {
+        owner = payable(msg.sender);
+    }
+
+    // Function to deposit Ether into this contract.
+    // Call this function along with some Ether.
+    // The balance of this contract will be automatically updated.
+    function deposit() public payable {}
+
+    // Call this function along with some Ether.
+    // The function will throw an error since this function is not payable.
+    function notPayable() public {}
+
+    // Function to withdraw all Ether from this contract.
+    function withdraw() public {
+        // get the amount of Ether stored in this contract
+        uint amount = address(this).balance;
+
+        // send all Ether to owner
+        // Owner can receive Ether since the address of owner is payable
+        (bool success, ) = owner.call{value: amount}("");
+        require(success, "Failed to send Ether");
+    }
+
+    // Function to transfer Ether from this contract to address from input
+    function transfer(address payable _to, uint _amount) public {
+        // Note that "to" is declared as payable
+        (bool success, ) = _to.call{value: _amount}("");
+        require(success, "Failed to send Ether");
+    }
+}
+
+// Sending Ehter
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract ReceiveEther {
+    /*
+    Which function is called, fallback() or receive()?
+
+           send Ether
+               |
+         msg.data is empty?
+              / \
+            yes  no
+            /     \
+receive() exists?  fallback()
+         /   \
+        yes   no
+        /      \
+    receive()   fallback()
+    */
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
+
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+}
+
+contract SendEther {
+    function sendViaTransfer(address payable _to) public payable {
+        // This function is no longer recommended for sending Ether.
+        _to.transfer(msg.value);
+    }
+
+    function sendViaSend(address payable _to) public payable {
+        // Send returns a boolean value indicating success or failure.
+        // This function is not recommended for sending Ether.
+        bool sent = _to.send(msg.value);
+        require(sent, "Failed to send Ether");
+    }
+
+    function sendViaCall(address payable _to) public payable {
+        // Call returns a boolean value indicating success or failure.
+        // This is the current recommended method to use.
+        (bool sent, bytes memory data) = _to.call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
+    }
+}
+
+
+// Fallback
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Fallback {
+    event Log(string func, uint gas);
+
+    // Fallback function must be declared as external.
+    fallback() external payable {
+        // send / transfer (forwards 2300 gas to this fallback function)
+        // call (forwards all of the gas)
+        emit Log("fallback", gasleft());
+    }
+
+    // Receive is a variant of fallback that is triggered when msg.data is empty
+    receive() external payable {
+        emit Log("receive", gasleft());
+    }
+
+    // Helper function to check the balance of this contract
+    function getBalance() public view returns (uint) {
+        return address(this).balance;
+    }
+}
+
+contract SendToFallback {
+    function transferToFallback(address payable _to) public payable {
+        _to.transfer(msg.value);
+    }
+
+    function callFallback(address payable _to) public payable {
+        (bool sent, ) = _to.call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
+    }
+}
+
+pragma solidity ^0.8.17;
+
+// TestFallbackInputOutput -> FallbackInputOutput -> Counter
+contract FallbackInputOutput {
+    address immutable target;
+
+    constructor(address _target) {
+        target = _target;
+    }
+
+    fallback(bytes calldata data) external payable returns (bytes memory) {
+        (bool ok, bytes memory res) = target.call{value: msg.value}(data);
+        require(ok, "call failed");
+        return res;
+    }
+}
+
+contract Counter {
+    uint public count;
+
+    function get() external view returns (uint) {
+        return count;
+    }
+
+    function inc() external returns (uint) {
+        count += 1;
+        return count;
+    }
+}
+
+contract TestFallbackInputOutput {
+    event Log(bytes res);
+
+    function test(address _fallback, bytes calldata data) external {
+        (bool ok, bytes memory res) = _fallback.call(data);
+        require(ok, "call failed");
+        emit Log(res);
+    }
+
+    function getTestData() external pure returns (bytes memory, bytes memory) {
+        return (abi.encodeCall(Counter.get, ()), abi.encodeCall(Counter.inc, ()));
+    }
+}
+
+
+// How to intract with CALL
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Receiver {
+    event Received(address caller, uint amount, string message);
+
+    fallback() external payable {
+        emit Received(msg.sender, msg.value, "Fallback was called");
+    }
+
+    function foo(string memory _message, uint _x) public payable returns (uint) {
+        emit Received(msg.sender, msg.value, _message);
+
+        return _x + 1;
+    }
+}
+
+contract Caller {
+    event Response(bool success, bytes data);
+
+    // Let's imagine that contract Caller does not have the source code for the
+    // contract Receiver, but we do know the address of contract Receiver and the function to call.
+    function testCallFoo(address payable _addr) public payable {
+        // You can send ether and specify a custom gas amount
+        (bool success, bytes memory data) = _addr.call{value: msg.value, gas: 5000}(
+            abi.encodeWithSignature("foo(string,uint256)", "call foo", 123)
+        );
+
+        emit Response(success, data);
+    }
+
+    // Calling a function that does not exist triggers the fallback function.
+    function testCallDoesNotExist(address payable _addr) public payable {
+        (bool success, bytes memory data) = _addr.call{value: msg.value}(
+            abi.encodeWithSignature("doesNotExist()")
+        );
+
+        emit Response(success, data);
+    }
+}
+
+// detegatecall
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+// NOTE: Deploy this contract first
+contract B {
+    // NOTE: storage layout must be the same as contract A
+    uint public num;
+    address public sender;
+    uint public value;
+
+    function setVars(uint _num) public payable {
+        num = _num;
+        sender = msg.sender;
+        value = msg.value;
+    }
+}
+
+contract A {
+    uint public num;
+    address public sender;
+    uint public value;
+
+    function setVars(address _contract, uint _num) public payable {
+        // A's storage is set, B is not modified.
+        (bool success, bytes memory data) = _contract.delegatecall(
+            abi.encodeWithSignature("setVars(uint256)", _num)
+        );
+    }
+}
+
+// Function Selector
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract FunctionSelector {
+    /*
+    "transfer(address,uint256)"
+    0xa9059cbb
+    "transferFrom(address,address,uint256)"
+    0x23b872dd
+    */
+    function getSelector(string calldata _func) external pure returns (bytes4) {
+        return bytes4(keccak256(bytes(_func)));
+    }
+}
+
+
+// calling other contract
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Callee {
+    uint public x;
+    uint public value;
+
+    function setX(uint _x) public returns (uint) {
+        x = _x;
+        return x;
+    }
+
+    function setXandSendEther(uint _x) public payable returns (uint, uint) {
+        x = _x;
+        value = msg.value;
+
+        return (x, value);
+    }
+}
+
+contract Caller {
+    function setX(Callee _callee, uint _x) public {
+        uint x = _callee.setX(_x);
+    }
+
+    function setXFromAddress(address _addr, uint _x) public {
+        Callee callee = Callee(_addr);
+        callee.setX(_x);
+    }
+
+    function setXandSendEther(Callee _callee, uint _x) public payable {
+        (uint x, uint value) = _callee.setXandSendEther{value: msg.value}(_x);
+    }
+}
+
+
+// contract that creates others contracts
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+contract Car {
+    address public owner;
+    string public model;
+    address public carAddr;
+
+    constructor(address _owner, string memory _model) payable {
+        owner = _owner;
+        model = _model;
+        carAddr = address(this);
+    }
+}
+
+contract CarFactory {
+    Car[] public cars;
+
+    function create(address _owner, string memory _model) public {
+        Car car = new Car(_owner, _model);
+        cars.push(car);
+    }
+
+    function createAndSendEther(address _owner, string memory _model) public payable {
+        Car car = (new Car){value: msg.value}(_owner, _model);
+        cars.push(car);
+    }
+
+    function create2(address _owner, string memory _model, bytes32 _salt) public {
+        Car car = (new Car){salt: _salt}(_owner, _model);
+        cars.push(car);
+    }
+
+    function create2AndSendEther(
+        address _owner,
+        string memory _model,
+        bytes32 _salt
+    ) public payable {
+        Car car = (new Car){value: msg.value, salt: _salt}(_owner, _model);
+        cars.push(car);
+    }
+
+    function getCar(
+        uint _index
+    )
+        public
+        view
+        returns (address owner, string memory model, address carAddr, uint balance)
+    {
+        Car car = cars[_index];
+
+        return (car.owner(), car.model(), car.carAddr(), address(car).balance);
+    }
+}
+
+// Try Catch
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+// External contract used for try / catch examples
+contract Foo {
+    address public owner;
+
+    constructor(address _owner) {
+        require(_owner != address(0), "invalid address");
+        assert(_owner != 0x0000000000000000000000000000000000000001);
+        owner = _owner;
+    }
+
+    function myFunc(uint x) public pure returns (string memory) {
+        require(x != 0, "require failed");
+        return "my func was called";
+    }
+}
+
+contract Bar {
+    event Log(string message);
+    event LogBytes(bytes data);
+
+    Foo public foo;
+
+    constructor() {
+        // This Foo contract is used for example of try catch with external call
+        foo = new Foo(msg.sender);
+    }
+
+    // Example of try / catch with external call
+    // tryCatchExternalCall(0) => Log("external call failed")
+    // tryCatchExternalCall(1) => Log("my func was called")
+    function tryCatchExternalCall(uint _i) public {
+        try foo.myFunc(_i) returns (string memory result) {
+            emit Log(result);
+        } catch {
+            emit Log("external call failed");
+        }
+    }
+
+    // Example of try / catch with contract creation
+    // tryCatchNewContract(0x0000000000000000000000000000000000000000) => Log("invalid address")
+    // tryCatchNewContract(0x0000000000000000000000000000000000000001) => LogBytes("")
+    // tryCatchNewContract(0x0000000000000000000000000000000000000002) => Log("Foo created")
+    function tryCatchNewContract(address _owner) public {
+        try new Foo(_owner) returns (Foo foo) {
+            // you can use variable foo here
+            emit Log("Foo created");
+        } catch Error(string memory reason) {
+            // catch failing revert() and require()
+            emit Log(reason);
+        } catch (bytes memory reason) {
+            // catch failing assert()
+            emit LogBytes(reason);
+        }
+    }
+}

@@ -39,7 +39,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"src/contracts/Counter.sol": "Counter"
+			"src/pages/interface/Interface.sol": "Counter"
 		},
 		"evmVersion": "shanghai",
 		"libraries": {},
@@ -53,12 +53,12 @@
 		"remappings": []
 	},
 	"sources": {
-		"src/contracts/Counter.sol": {
-			"keccak256": "0x0f94a2e1fb728a3a4f9e2c07631813c3d4b86f658c9a77adaac21c496de804da",
+		"src/pages/interface/Interface.sol": {
+			"keccak256": "0x69aba5c554c678b2d9d22ff324d0c6b656674fd2832a6f3ea9e2df9d01d8c487",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://e4a22bb6dd76c76d26f2a6da193e1cdf4ac66da8335ac9b465d4964889576403",
-				"dweb:/ipfs/QmTA2PVfU7duuu5nyHuXXtiZovHeeziNUQjoMoUxttm8qV"
+				"bzz-raw://3fe58e77af915f4f9b58eb54f69ad0b1620bf00d27576381632c20fd300f698c",
+				"dweb:/ipfs/QmNqV1QdUMRNaUaKMdgz8p9SAmbYsgTgvmRymauJ2kHKt3"
 			]
 		}
 	},
